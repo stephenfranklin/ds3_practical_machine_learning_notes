@@ -1,0 +1,191 @@
+---
+title       : Plotting predictors
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../librariesNew
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_013_plotting_predictors/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+
+## Example: predicting wages
+
+<img class=center src=https://github.com/DataScienceSpecialization/courses/tree/master/assets/img/08_PredictionAndMachineLearning/wages.jpg height=350>
+
+Image Credit [http://www.cahs-media.org/the-high-cost-of-low-wages](http://www.cahs-media.org/the-high-cost-of-low-wages)
+
+Data from: [ISLR package](http://cran.r-project.org/web/packages/ISLR) from the book: [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)  
+
+
+
+---
+
+## Example: Wage data
+```{r libraries, cache=FALSE}
+library(ISLR); library(ggplot2); library(caret); library(Hmisc); library(gridExtra)
+```
+```{r loadData,cache=TRUE}
+data(Wage)  ## from ISLR (Introduction to Statistical Learning)
+summary(Wage)
+```
+
+
+---
+
+## Get training/test sets
+
+```{r trainingTest,dependson="loadData",cache=TRUE}
+inTrain <- createDataPartition(y=Wage$wage,
+                              p=0.7, list=FALSE)
+training <- Wage[inTrain,]
+testing <- Wage[-inTrain,]
+dim(training); dim(testing)
+```
+
+
+---
+
+## Feature plot (*caret* package)
+We're going to do all of our plotting within the training set.  
+
+The featurePlot (or pairs plot) is a good way to compare all of the data to see any obvious trends.
+```{r ,dependson="trainingTest",fig.height=4,fig.width=4}
+featurePlot(x=training[,c("age","education","jobclass")],
+            y = training$wage,
+            plot="pairs")
+```
+We can see a slight relationship between Wage and Education.
+
+---
+
+## Qplot (*ggplot2* package)
+
+The Qplot or the base plot function is good for a quick comparison.
+```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
+qplot(age,wage,data=training)
+```
+
+In that plot we see a big cluster of data that appears to be quite different than the majority of the data. This is not an uncommon occurrence in data science. Let's explore that relationship with another variable.
+
+---
+
+## Qplot with color (*ggplot2* package)
+
+Here we've colored the data points by the jobclass variable.
+```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
+qplot(age,wage,colour=jobclass,data=training)
+```
+And we can see that most of the higher wage cluster is made up of information jobs.
+
+---
+
+## Add regression smoothers (*ggplot2* package)
+Now we've made a plot of age versus wage and it's colored by education. The `geom_smooth` function is used to apply a linear smoother to the data, which fits a linear model for every education class.
+
+```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
+qq <- qplot(age,wage,colour=education,data=training)
+qq +  geom_smooth(method='lm',formula=y~x)
+```
+
+---
+
+## cut2, making factors (*Hmisc* package)
+It's often useful to break the output variable (wage) into different categories. The `cut2()` function from the `Hmisc` package is great for breaking the data into factors based on quantile groups.
+
+```{r cut2,dependson="trainingTest",fig.height=4,fig.width=6,cache=TRUE}
+cutWage <- cut2(training$wage,g=3)  ## g= # of groups to make.
+table(cutWage)
+```
+
+---
+
+## Boxplots with cut2
+Then we can use the groups we made with `cut2()` to make a boxplot.
+
+```{r ,dependson="cut2plot",fig.height=4,fig.width=6,cache=TRUE}
+p1 <- qplot(cutWage,age, data=training,fill=cutWage,
+      geom=c("boxplot"))
+p1
+```
+
+So now we can see more clearly a realationship between age and wage.
+---
+
+## Boxplots with points overlayed
+Boxplots can obscure how many points are in each group. We can show the points overlayed with the jitter geom. And we can show both plots side by side with `grid.arrange()` from the gridExtra package. 
+
+```{r ,dependson="cut2plot",fig.height=4,fig.width=9}
+p2 <- qplot(cutWage,age, data=training,fill=cutWage,
+      geom=c("boxplot","jitter"))
+grid.arrange(p1,p2,ncol=2)
+```
+
+If there were very few points in a particular box, then that box wouldn't be representative of the data.
+
+---
+
+## Tables
+We can also make a table from the cut version of Wage and another variable.
+
+```{r ,dependson="cut2",fig.height=4,fig.width=9}
+t1 <- table(cutWage,training$jobclass)
+t1
+```
+We can see in this table that there are more industrial jobs than information jobs in the lower wage range, and that trend reverses itself in the higher wage range.
+
+We can also use `prop.table` to get the proportions in each group. 
+```{r ,dependson="cut2",fig.height=4,fig.width=9}
+prop.table(t1,1) ## The second argument is row=1 or column=2.
+```
+So in the first row (lower wages), 65% of the jobs are industrial, 35% are information.
+
+---
+
+## Density plots
+Density plots are useful for continuous predictors. Here we make a qplot with the geom density for the wage, which we group with color by education. The density is the proportion of data in the wage variable at a particular wage.
+
+```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
+qplot(wage,colour=education,data=training,geom="density")
+```
+
+
+---
+
+## Notes and further reading
+
+* Make your plots only in the training set 
+  * Don't use the test set for exploration!
+* Things you should be looking for
+  * Imbalance in outcomes/predictors
+    * If you see a couple of lumps of outcomes that makes a good predictor.
+    * But if you see only 3 of one outcome and 150 of the other outcome then it will be difficult to make an accurate classifier.
+  * Outliers 
+  * Groups of points not explained by a predictor
+  * Skewed variables may need to be normalized.
+* [ggplot2 tutorial](http://rstudio-pubs-static.s3.amazonaws.com/2176_75884214fc524dc0bc2a140573da38bb.html)
+* [caret visualizations](http://caret.r-forge.r-project.org/visualizations.html)

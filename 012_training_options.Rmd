@@ -34,8 +34,11 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 ## SPAM Example
 Here we have a basic caret example with default options.
-```{r loadPackage,cache=TRUE}
+```{r libraries,cache=F}
 library(caret); library(kernlab); data(spam)
+```
+Note: In knitr, libraries should not be cached if you want to use them with other chunks.
+```{r loadPackage,cache=TRUE}
 inTrain <- createDataPartition(y=spam$type,
                               p=0.75, list=FALSE)
 training <- spam[inTrain,]
@@ -46,25 +49,31 @@ modelFit <- train(type ~.,data=training, method="glm")
 ---
 
 ## Train options
-
+Here are some options for the `train()` function.
 ```{r ,dependson="loadPackage"}
 args(train.default)
 ```
 
+- `preProcess`: preprocessing options.
+- `weights`: upweight or downweight certain observations,
+    - useful if you have an unbalanced training set with a lot more examples of one type than another. 
+- `metric`: default for factor variables is accuracy; for continuous variables, it's root mean squared error (RMSE).
+- `trControl`: uses the `traincontrol()` function for various control parameters.
 
 ---
 
 ## Metric options
 
 __Continous outcomes__:
+
   * _RMSE_ = Root mean squared error
-  * _RSquared_ = $R^2$ from regression models
+  * _RSquared_ = $R^2$ from regression models;
+    * it's a measure of linear agreement; useful for Linear Regression; less useful for Random Forest.
 
 __Categorical outcomes__:
+
   * _Accuracy_ = Fraction correct
   * _Kappa_ = A measure of [concordance](http://en.wikipedia.org/wiki/Cohen%27s_kappa)
-  
-  
 
 --- 
 
@@ -77,13 +86,15 @@ args(trainControl)
 --- 
 
 ## trainControl resampling
-
+The `trainControl()` argument allows you to be much more precise in the way you train models.
 * _method_
   * _boot_ = bootstrapping
   * _boot632_ = bootstrapping with adjustment
   * _cv_ = cross validation
-  * _repeatedcv_ = repeated cross validation
-  * _LOOCV_ = leave one out cross validation
+  * _repeatedcv_ = repeated cross validation (See _repeats_.)
+    * sub-cross validation with different random draws.
+  * _LOOCV_ = leave one out cross validation.
+  * Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds.
 * _number_
   * For boot/cross validation
   * Number of subsamples to take
@@ -91,19 +102,16 @@ args(trainControl)
   * Number of times to repeate subsampling
   * If big this can _slow things down_
 
-
 ---
 
 ## Setting the seed
 
-* It is often useful to set an overall seed
-* You can also set a seed for each resample
-* Seeding each resample is useful for parallel fits
-
-
+* It is often useful to set an overall seed.
+* You can also set a seed for each resample.
+    * There is a `seed` argument in the `trainControl` function.
+* Seeding each resample is useful for parallel fits.
 
 --- 
-
 
 ## seed example
 

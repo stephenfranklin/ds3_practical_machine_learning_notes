@@ -60,8 +60,10 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 
 <div id="spam-example" class="section level2">
 <h2>SPAM Example</h2>
-<pre class="r"><code>library(caret); library(kernlab); data(spam)
-inTrain &lt;- createDataPartition(y=spam$type,
+<p>Here we have a basic caret example with default options.</p>
+<pre class="r"><code>library(caret); library(kernlab); data(spam)</code></pre>
+<p>Note: In knitr, libraries should not be cached if you want to use them with other chunks.</p>
+<pre class="r"><code>inTrain &lt;- createDataPartition(y=spam$type,
                               p=0.75, list=FALSE)
 training &lt;- spam[inTrain,]
 testing &lt;- spam[-inTrain,]
@@ -70,18 +72,39 @@ modelFit &lt;- train(type ~.,data=training, method=&quot;glm&quot;)</code></pre>
 </div>
 <div id="train-options" class="section level2">
 <h2>Train options</h2>
+<p>Here are some options for the <code>train()</code> function.</p>
 <pre class="r"><code>args(train.default)</code></pre>
 <pre><code>function (x, y, method = &quot;rf&quot;, preProcess = NULL, ..., weights = NULL, 
     metric = ifelse(is.factor(y), &quot;Accuracy&quot;, &quot;RMSE&quot;), maximize = ifelse(metric == 
         &quot;RMSE&quot;, FALSE, TRUE), trControl = trainControl(), tuneGrid = NULL, 
     tuneLength = 3) 
 NULL</code></pre>
+<ul>
+<li><code>preProcess</code>: preprocessing options.</li>
+<li><code>weights</code>: upweight or downweight certain observations,
+<ul>
+<li>useful if you have an unbalanced training set with a lot more examples of one type than another.</li>
+</ul></li>
+<li><code>metric</code>: default for factor variables is accuracy; for continuous variables, it’s root mean squared error (RMSE).</li>
+<li><code>trControl</code>: uses the <code>traincontrol()</code> function for various control parameters.</li>
+</ul>
 <hr />
 </div>
 <div id="metric-options" class="section level2">
 <h2>Metric options</h2>
-<p><strong>Continous outcomes</strong>: * <em>RMSE</em> = Root mean squared error * <em>RSquared</em> = <span class="math">\(R^2\)</span> from regression models</p>
-<p><strong>Categorical outcomes</strong>: * <em>Accuracy</em> = Fraction correct * <em>Kappa</em> = A measure of <a href="http://en.wikipedia.org/wiki/Cohen%27s_kappa">concordance</a></p>
+<p><strong>Continous outcomes</strong>:</p>
+<ul>
+<li><em>RMSE</em> = Root mean squared error</li>
+<li><em>RSquared</em> = <span class="math">\(R^2\)</span> from regression models;
+<ul>
+<li>it’s a measure of linear agreement; useful for Linear Regression; less useful for Random Forest.</li>
+</ul></li>
+</ul>
+<p><strong>Categorical outcomes</strong>:</p>
+<ul>
+<li><em>Accuracy</em> = Fraction correct</li>
+<li><em>Kappa</em> = A measure of <a href="http://en.wikipedia.org/wiki/Cohen%27s_kappa">concordance</a></li>
+</ul>
 <hr />
 </div>
 <div id="traincontrol" class="section level2">
@@ -101,28 +124,18 @@ NULL</code></pre>
 </div>
 <div id="traincontrol-resampling" class="section level2">
 <h2>trainControl resampling</h2>
-<ul>
-<li><em>method</em></li>
-<li><em>boot</em> = bootstrapping</li>
-<li><em>boot632</em> = bootstrapping with adjustment</li>
-<li><em>cv</em> = cross validation</li>
-<li><em>repeatedcv</em> = repeated cross validation</li>
-<li><em>LOOCV</em> = leave one out cross validation</li>
-<li><em>number</em></li>
-<li>For boot/cross validation</li>
-<li>Number of subsamples to take</li>
-<li><em>repeats</em></li>
-<li>Number of times to repeate subsampling</li>
-<li>If big this can <em>slow things down</em></li>
-</ul>
+<p>The <code>trainControl()</code> argument allows you to be much more precise in the way you train models. * <em>method</em> * <em>boot</em> = bootstrapping * <em>boot632</em> = bootstrapping with adjustment * <em>cv</em> = cross validation * <em>repeatedcv</em> = repeated cross validation (See <em>repeats</em>.) * sub-cross validation with different random draws. * <em>LOOCV</em> = leave one out cross validation. * Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds. * <em>number</em> * For boot/cross validation * Number of subsamples to take * <em>repeats</em> * Number of times to repeate subsampling * If big this can <em>slow things down</em></p>
 <hr />
 </div>
 <div id="setting-the-seed" class="section level2">
 <h2>Setting the seed</h2>
 <ul>
-<li>It is often useful to set an overall seed</li>
-<li>You can also set a seed for each resample</li>
-<li>Seeding each resample is useful for parallel fits</li>
+<li>It is often useful to set an overall seed.</li>
+<li>You can also set a seed for each resample.
+<ul>
+<li>There is a <code>seed</code> argument in the <code>trainControl</code> function.</li>
+</ul></li>
+<li>Seeding each resample is useful for parallel fits.</li>
 </ul>
 <hr />
 </div>
