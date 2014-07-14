@@ -173,7 +173,6 @@ Density plots are useful for continuous predictors. Here we make a qplot with th
 qplot(wage,colour=education,data=training,geom="density")
 ```
 
-
 ---
 
 ## Notes and further reading
