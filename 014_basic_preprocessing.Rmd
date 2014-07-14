@@ -123,17 +123,25 @@ modelFit
 ---
 
 ## Standardizing - Box-Cox transforms
+The Box-Cox Transforms are a set of transformations that take continuous data and try to make them look like Normal data by estimating a specific set of parameters using maximum likelihood.
+
+Here we use the "BoxCox" method in the `preProcess()` function.
 
 ```{r ,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=7}
 preObj <- preProcess(training[,-58],method=c("BoxCox"))
 trainCapAveS <- predict(preObj,training[,-58])$capitalAve
 par(mfrow=c(1,2)); hist(trainCapAveS); qqnorm(trainCapAveS)
 ```
-
+In this case, we can see that the data is somewhat normal but that there are a bunch of data points down near zero, that it can't do anything about. It does help a lot with data that are highly skewed.
 
 ---
 
 ## Standardizing - Imputing data
+Prediction algorithms often fail with missing data. So we like to impute values for the missing data.
+
+Here we impute them with "K nearest neighbors imputation" which is `method='knnImpute'.  
+
+We'll set the seed here because this is a randomized algorithm and we want to get reproducible results, and we'll first make some NA values because this data set doesn't have any.
 
 ```{r knn,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=7}
 set.seed(13343)
@@ -156,12 +164,15 @@ capAveTruth <- (capAveTruth-mean(capAveTruth))/sd(capAveTruth)
 ---
 
 ## Standardizing - Imputing data
+Because we created the NAs, we had actual values which we can now compare to our imputed values.
 
+We'll do that by subracting one group from the other and looking at the quantiles. Here we have the quantiles of the all the data, followed by just the imputed values (from the variable `selectNA`), followed by just the values that weren't imputed.
 ```{r ,dependson="knn",cache=TRUE,fig.height=3.5,fig.width=7}
 quantile(capAve - capAveTruth)
 quantile((capAve - capAveTruth)[selectNA])
 quantile((capAve - capAveTruth)[!selectNA])
 ```
+The numbers close to zero indicate that our imputations are pretty good.
 
 ---
 
