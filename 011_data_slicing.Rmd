@@ -1,0 +1,131 @@
+---
+title       : Data slicing
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../libraries
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_011_data_slicing/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+
+## SPAM Example: Data splitting
+
+Here we use the `createDataPartition()` function to create a training set and a testing set.
+- We split the data by the `spam$type` column, 
+    - which is a factor of two [spam; nonspam].
+- We choose `p=0.75` to specify that 75% of the data is allocated to the training set.
+- The `inTrain` variable is now assigned an indicator function which can be used to subset our two sets.
+
+```{r loadPackage}
+library(caret); library(kernlab); data(spam)
+inTrain <- createDataPartition(y=spam$type,
+                              p=0.75, list=FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+dim(training)
+```
+
+---
+
+## SPAM Example: K-fold
+For a cross-validation set, we use `createFolds()`.
+- We're splitting on `spam$type`.
+- We'll have 10 folds.
+- `list=TRUE` means that it will return each set of indices corresponding to a particular fold as a list.
+- `returnTrain` tells it to return the training set or the test set.
+
+```{r kfold,dependson="loadPackage"}
+set.seed(32323)
+folds <- createFolds(y=spam$type,k=10,
+                             list=TRUE,returnTrain=TRUE)
+sapply(folds,length)  ## Check the lengths of our folds.
+folds[[1]][1:10] ## Check the indices (row numbers) of the samples.
+```
+That last command shows us that the folds were split while preserving  the original order of the data set; they weren't re-ordered. That is, the first 4141 samples are in the first fold, and the very first sample is still the first on the list.
+
+This means that we can easily know which of the indices are corresponding to the training and test sets within those k folds. 
+
+---
+
+## SPAM Example: Return test
+Here we return the test set. 
+
+```{r kfoldtest,dependson="loadPackage"}
+set.seed(32323)
+folds <- createFolds(y=spam$type,k=10,
+                             list=TRUE,returnTrain=FALSE)
+sapply(folds,length)
+folds[[1]][1:10]
+```
+
+You can see that the folds are smaller because the test set is only 25% of the data.
+
+---
+
+## SPAM Example: Resampling
+`createResample()` is used for resampling or bootstrapping instead of k-fold cross validation. 
+ - Instead of a list we could have a matrix.
+- Resampling uses replacement, which means we could get duplicated samples.
+
+```{r resample,dependson="loadPackage"}
+set.seed(32323)
+folds <- createResample(y=spam$type,times=10,
+                             list=TRUE)
+sapply(folds,length)
+folds[[1]][1:10]
+```
+
+Notice that in fold #1, sample #3 was used three times, and #5 twice.
+
+---
+
+## SPAM Example: Time Slices
+With time slices we can specify a number of consecutive samples to take as the training set, and a number of subsequent consecutive samples to skip as the test set. That way we can use the time-varying component of the set to predict.
+
+- `initialWindow=20` : 20 samples per window for the training set.
+- `horizon=10` : The next 10 samples for the test set.
+
+```{r time,dependson="loadPackage"}
+set.seed(32323)
+tme <- 1:1000
+folds <- createTimeSlices(y=tme,initialWindow=20,
+                          horizon=10)
+names(folds)
+folds$train[[1]]
+folds$test[[1]]
+```
+
+---
+
+## Further information
+
+* Caret tutorials:
+  * [http://www.edii.uclm.es/~useR-2013/Tutorials/kuhn/user_caret_2up.pdf](http://www.edii.uclm.es/~useR-2013/Tutorials/kuhn/user_caret_2up.pdf)
+  * [http://cran.r-project.org/web/packages/caret/vignettes/caret.pdf](http://cran.r-project.org/web/packages/caret/vignettes/caret.pdf)
+* A paper introducing the caret package
+  * [http://www.jstatsoft.org/v28/i05/paper](http://www.jstatsoft.org/v28/i05/paper)

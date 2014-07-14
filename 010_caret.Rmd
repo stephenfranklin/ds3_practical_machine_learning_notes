@@ -1,0 +1,160 @@
+---
+title       : The caret package
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../librariesNew
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+output: html_document
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_010_caret/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+## The caret R package
+
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/caret.png height=400>
+
+[http://caret.r-forge.r-project.org/](http://caret.r-forge.r-project.org/)
+
+---
+
+## Caret functionality
+
+* Some preprocessing (cleaning)
+  * preProcess - clean data and setup the features.
+* Data splitting
+  * createDataPartition
+  * createResample
+  * createTimeSlices
+* Training/testing functions
+  * train
+  * predict
+* Model comparison
+  * confusionMatrix - info on how well the model works on new data sets.
+
+---
+
+## Machine learning algorithms in R
+
+* Linear discriminant analysis
+* Regression
+* Naive Bayes
+* Support vector machines
+* Classification and regression trees
+* Random forests
+* Boosting
+* etc. 
+
+These are written by different developers and so they have different interfaces.
+
+---
+
+## Why caret? 
+
+Consider this list of different prediction algorithms from different packages. For each algorithm we have created an object called `obj`.  Notice that each object has a different class, and that each prediction requires different parameters to be passed to it.
+
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/predicttable.png height=250>
+
+The caret package provides a unifying framework which allows you to predict using just one function and without having to specify all the options.
+
+http://www.edii.uclm.es/~useR-2013/Tutorials/kuhn/user_caret_2up.pdf
+
+
+--- 
+
+## SPAM Example: Data splitting
+
+```{r loadPackage}
+library(caret); library(kernlab); data(spam)
+inTrain <- createDataPartition(y=spam$type,
+                              p=0.75, list=FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+dim(training)
+```
+
+- `p=0.75`: The training set will use 75% of the data.
+- `testing <- spam[-inTrain,]`: The testing subset is just the data that isn't in `inTrain`.
+
+--- 
+
+## SPAM Example: Fit a model
+Here we fit a model using the caret package.
+ - We use the `train()` function.
+ - `~.` indicates that we want to use all the other variables to predict.
+
+```{r training, dependson="loadPackage",cache=TRUE}
+set.seed(32343)
+modelFit <- train(type ~.,data=training, method="glm")
+modelFit
+```
+
+The `train()` function will test the model (in this case, a glm) in a variety of ways.
+- In this case, it decided to use `Resampling: Bootstrapped` with 25 replicants.
+    - It also corrects for the potential bias that might come from bootstrapping.
+
+--- 
+
+## SPAM Example: Final model
+
+Here we look at the fitted values for our model by using the command `<name of model>$finalModel`.
+
+```{r finalModel, dependson="training",cache=TRUE}
+modelFit <- train(type ~.,data=training, method="glm")
+modelFit$finalModel
+```
+
+--- 
+
+## SPAM Example: Prediction
+Then we can predict our test data like so:
+
+```{r predictions, dependson="training",cache=TRUE}
+predictions <- predict(modelFit,newdata=testing)
+predictions
+```
+
+--- 
+
+## SPAM Example: Confusion Matrix
+The confusion matrix will help us evaluate how well our model fit works.  
+We need to pass it two parameters:
+
+    - The predictions from your model fit.
+    - The outcome (output variable) from the testing sample.
+```{r confusion, dependson="predictions",cache=TRUE}
+confusionMatrix(predictions,testing$type)
+```
+
+---
+
+## Further information
+
+* Caret tutorials:
+  * [http://www.edii.uclm.es/~useR-2013/Tutorials/kuhn/user_caret_2up.pdf](http://www.edii.uclm.es/~useR-2013/Tutorials/kuhn/user_caret_2up.pdf)
+  * [http://cran.r-project.org/web/packages/caret/vignettes/caret.pdf](http://cran.r-project.org/web/packages/caret/vignettes/caret.pdf)
+* A paper introducing the caret package
+  * [http://www.jstatsoft.org/v28/i05/paper](http://www.jstatsoft.org/v28/i05/paper)
