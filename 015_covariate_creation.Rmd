@@ -1,0 +1,196 @@
+---
+title       : Covariate creation
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../librariesNew
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache=TRUE, cache.path = '.cache/', fig.path = 'fig_015_covariate/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+
+## Two levels of covariate creation
+Covariates are the input variables that will be combined to form your model; often called predictors or features. 
+
+There are two levels of covariate creation. 
+
+**Level 1: From raw data to covariate**
+
+The first level is taking the raw data (i.e. image, text, website) and turning it into a predictor that you can use.
+
+We want to turn the raw data into a variable that describe the data as much as possible while compressing and fitting standard machine learning algorithms.
+
+Here we have an email which is difficult as is to plug into a prediction function, so we'd like to describe the important information in the email as distinct variables.
+
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/covCreation1.png height=200>
+
+In this case, we've made a variable ('CapitalAve') which is the average number of capital letters in the email. We have another variable ('you') which is the number of times the word "you" is in the email.
+
+Creating the covariates from raw data involves a lot of thinking about the structure of the data and how to extract the most relevant information into the fewest number of variables.
+
+**Level 2: Transforming tidy covariates** 
+
+Often the covariate from the raw data could be more useful for a model if it were transformed by some function, such as square, cube, or a myriad other functions. For example, here we have created an new variable ('capitalAveSq') which is the square of 'capitalAve'.
+
+```{r spamData,fig.height=4,fig.width=4}
+library(kernlab);data(spam)
+spam$capitalAveSq <- spam$capitalAve^2
+```
+
+---
+
+## Level 1, Raw data -> covariates
+
+* Depends heavily on application
+   * The balancing act is summarization vs. information loss
+* Examples:
+    * In the email example, we wanted frequency of capitals and words and dollar signs.
+    * If the data is sounds of voices, we might want a certain frequency band.
+    * If the data is images if faces, we might want to identify where the nose, eyes, ears are likely to be.
+    * Text files: frequency of words, frequency of phrases ([Google ngrams](https://books.google.com/ngrams)), frequency of capital letters.
+    * Images: Edges, corners, blobs, ridges ([computer vision feature detection](http://en.wikipedia.org/wiki/Feature_detection_(computer_vision)))
+    * Webpages: Number and type of images, position of elements, colors, videos ([A/B Testing](http://en.wikipedia.org/wiki/A/B_testing))
+    * People: Height, weight, hair color, sex, country of origin. 
+* The more knowledge of the system you have the better the job you will do. 
+* When in doubt, err on the side of more features
+* Can be automated, but use caution!
+    * Often a very useful feature in the training set doesn't generalize well to the test set.
+
+---
+
+## Level 2, Tidy covariates -> new covariates
+We can create new covariates from transformations of our initial tidy covariates.
+
+* More necessary for some methods (regression, svms (support vector machines)) than for others (classification trees).
+* Should be done _only on the training set_
+* The best approach is through exploratory analysis (plotting/tables)
+* New covariates should be added to data frames
+
+
+
+---
+
+## Load example data
+
+
+```{r loadData,cache=TRUE}
+library(ISLR); library(caret); data(Wage);
+inTrain <- createDataPartition(y=Wage$wage,
+                              p=0.7, list=FALSE)
+training <- Wage[inTrain,]; testing <- Wage[-inTrain,]
+```
+
+
+---
+
+## Common covariates to add, dummy variables
+
+__Basic idea - convert factor variables to [indicator variables](http://bit.ly/19ZhWB6)__
+We can use the `dummyVars()` function from the caret package to easily turn a factor variable into dummy variables.
+
+```{r dummyVar,dependson="loadData"}
+table(training$jobclass)
+dummies <- dummyVars(wage ~ jobclass,data=training)
+head(predict(dummies,newdata=training))
+```
+
+
+
+---
+
+## Removing zero covariates
+Many variables will not be useful predictors because they have nearly no variability. The `nearZeroVar()` function from the caret package will easily determine which variables in the set have near zero variability, and can therefore be ignored.
+
+```{r ,dependson="dummyVar"}
+nsv <- nearZeroVar(training,saveMetrics=TRUE)
+nsv
+```
+
+
+
+---
+
+## Spline basis
+The `bs()` function (B-spline Basis) from the splines package will create a polynomial variable of `df` degrees, which will allow more complicated model fits.
+
+For example, here we choose the variable 'age' and 3 degrees of freedom, and we make a B-spline matrix called 'bsBasis'. Our new matrix has three variables:
+    
+    1. 'age' itself (but scaled).
+    2. 'age' squared 
+        - allowing for a quadratic relationship between age and the outcome.
+    3. 'age' cubed.
+        - allowing for a cubic relationship.
+
+Those extra two variables will now allow for curvy model fitting.
+```{r splines,dependson="dummyVar",cache=TRUE}
+library(splines)
+bsBasis <- bs(training$age,df=3) 
+head(bsBasis)
+```
+
+_See also_: ns(),poly()
+
+---
+
+## Fitting curves with splines
+Here we use the B-spline Basis to fit a model with a curve.
+
+```{r ,dependson="splines",fig.height=4,fig.width=4}
+lm1 <- lm(wage ~ bsBasis,data=training)
+plot(training$age,training$wage,pch=19,cex=0.5)
+points(training$age,predict(lm1,newdata=training),col="red",pch=19,cex=0.5)
+```
+
+
+---
+
+## Splines on the test set
+Here we apply the B-Spline Basis we created from our training set to the test set.
+
+```{r ,dependson="splines",fig.height=4,fig.width=4}
+head( predict(bsBasis,age=testing$age) )
+```
+
+
+---
+
+## Notes and further reading
+
+* Level 1 feature creation (raw data to covariates)
+  * Science is key. Google "feature extraction for [data type]"
+  * Err on overcreation of features
+  * In some applications (images, voices) automated feature creation is possible/necessary.
+    * Deep Learning is a technique for automated feature creation for voice or image. Here is a tutorial:
+    * http://www.cs.nyu.edu/~yann/talks/lecun-ranzato-icml2013.pdf
+* Level 2 feature creation (covariates to new covariates)
+  * The function _preProcess_ in _caret_ will handle some preprocessing.
+  * Create new covariates if you think they will improve fit
+  * Use exploratory analysis on the training set for creating them
+  * Be careful about overfitting!
+* [preprocessing with caret](http://caret.r-forge.r-project.org/preprocess.html)
+* If you want to fit spline models, use the _gam_ method in the _caret_ package which allows smoothing of multiple variables.
+* More on feature creation/data tidying in the Obtaining Data course from the Data Science course track. 

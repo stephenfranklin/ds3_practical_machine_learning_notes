@@ -35,7 +35,7 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 ## Example: predicting wages
 
-<img class=center src=https://github.com/DataScienceSpecialization/courses/tree/master/assets/img/08_PredictionAndMachineLearning/wages.jpg height=350>
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/wages.jpg height=350>
 
 Image Credit [http://www.cahs-media.org/the-high-cost-of-low-wages](http://www.cahs-media.org/the-high-cost-of-low-wages)
 
