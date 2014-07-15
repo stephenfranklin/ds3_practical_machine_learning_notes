@@ -47,9 +47,12 @@ Data from: [ISLR package](http://cran.r-project.org/web/packages/ISLR) from the 
 
 ## Example: Wage data
 
-```{r loadData,cache=TRUE}
+```{r libraries, cache=FALSE, message=FALSE}
 library(ISLR); library(ggplot2); library(caret);
-data(Wage); Wage <- subset(Wage,select=-c(logwage))
+```
+```{r loadData,cache=TRUE}
+data(Wage)
+Wage <- subset(Wage,select=-c(logwage))
 summary(Wage)
 ```
 
@@ -71,19 +74,26 @@ dim(training); dim(testing)
 ---
 
 ## Feature plot
+The function `featurePlot()` is from the caret package, and it makes it easy to create lattice plots from datasets.
 
 ```{r ,dependson="trainingTest",fig.height=4,fig.width=4}
 featurePlot(x=training[,c("age","education","jobclass")],
             y = training$wage,
             plot="pairs")
+levels(training$education)
 ```
+This pairs plot is a little difficult to discern, but is great for exploratory analysis.
+The variables we're looking at are 'age', 'education', and 'jobclass', and the outcome variable is 'wage'.
+The 'education' variable is a factor of 5 levels.
 
+We can see several relationships here. Information seems to have some higher wages than industrial. An higher educucation level also is associated with higher wages. And a higher age seems to be associated with a higher wage, but there is a sizeable outlier group in age, which is something that can 
+explored further.
 
 ---
 
 ## Plot age versus wage
 
-
+Here we take a closer look at wage versus age.
 ```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
 qplot(age,wage,data=training)
 ```
@@ -93,7 +103,7 @@ qplot(age,wage,data=training)
 
 ## Plot age versus wage colour by jobclass
 
-
+We can show that much of the variability in that outlier group is due to jobclass.
 ```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
 qplot(age,wage,colour=jobclass,data=training)
 ```
@@ -103,7 +113,7 @@ qplot(age,wage,colour=jobclass,data=training)
 
 ## Plot age versus wage colour by education
 
-
+We can also check how education is associated with that outlier group. It looks like an advanced degree is highly associated as well as jobclass.
 ```{r ,dependson="trainingTest",fig.height=4,fig.width=6}
 qplot(age,wage,colour=education,data=training)
 ```
@@ -114,6 +124,14 @@ qplot(age,wage,colour=education,data=training)
 
 $$ ED_i = b_0 + b_1 age + b_2 I(Jobclass_i="Information") + \sum_{k=1}^4 \gamma_k I(education_i= level k) $$
 
+where:
+- $b_0$ is the intercept.
+- $b_1$ is the slope for 'age'.
+- $b_2$ is the slope for 'jobclass',
+    - where "Information"=1 and "Industrial"=0.
+- $\gamma_k$ is the slope for 'education', 
+    - where there are 4 dummy variables.
+
 ```{r modelFit,dependson="trainingTest", cache=TRUE,fig.height=4,fig.width=4}
 modFit<- train(wage ~ age + jobclass + education,
                method = "lm",data=training)
@@ -123,51 +141,67 @@ print(modFit)
 
 Education levels: 1 = HS Grad, 2 = Some College, 3 = College Grad, 4 = Advanced Degree
 
+Notice that the model has 10 predictors from 3 variables. That's because the education variable has multiple predictors.
+
 ---
 
 ## Diagnostics
-
+Here is a plot of the residuals of our model.
 ```{r,dependson="modelFit",fig.height=5,fig.width=5}
-plot(finMod,1,pch=19,cex=0.5,col="#00000010")
+plot(finMod,1,pch=19,cex=0.7,col="#00000010")
 ```
+The fitted values on the x-axis are our predictions from the training set, and the residuals are the amount of variation left over after fitting the model. That is, the difference between the predicted values and the real values. Idealy, we want the line to be horizontal at zero, which would indicate that there is no difference.
+
+We can see a few labeled outliers, which we might want to explore further to get a better fit.
 
 
 ---
 
 ## Color by variables not used in the model 
-
+Here we plot the fitted values versus the residuals, colored by the race variable.
 ```{r,dependson="modelFit",fig.height=4,fig.width=6}
 qplot(finMod$fitted,finMod$residuals,colour=race,data=training)
 ```
+It seems that some of the outliers may be explained by the race variable.
 
 ---
 
 ## Plot by index
+The dataset comes in a set of rows in a particular order, and the index is a particular row.
 
+This plot shows that there are higher residuals at greater row numbers, that is, at the end of the dataset. There is a trend as well, with the residuals increasing with row number.
 ```{r,dependson="modelFit",fig.height=5,fig.width=5}
 plot(finMod$residuals,pch=19)
 ```
 
+There shouldn't be such a relationship unless there is a time or age or some continuous variable that the rows are ordered by, and that we didn't include in our model.  
 
 ---
 
 ## Predicted versus truth in test set
+
+We can plot the wage variable in the test set versus the predicted values in the test set, and ideally we want to see a straight 45 degree line, which would indicate a perfect fit. We can color by different variables to explore what trends we might be missing.
 
 ```{r predictions, dependson="modelFit",fig.height=4,fig.width=6}
 pred <- predict(modFit, testing)
 qplot(wage,pred,colour=year,data=testing)
 ```
 
+Of course, this should be done only on the training set to adjust the model. 
+
+This analysis performed on the test set is a post-mortem to determine whether your analysis worked or not; you can't go back and re-train your model from this information. 
+
 ---
 
 ## If you want to use all covariates
 
+Here we do it the easy way -- just use all the variables.
 ```{r allCov,dependson="trainingTest",fig.height=4,fig.width=4,warning=FALSE}
 modFitAll<- train(wage ~ .,data=training,method="lm")
 pred <- predict(modFitAll, testing)
 qplot(wage,pred,data=testing)
 ```
-
+It looks like a better fit.
 
 ---
 
