@@ -1,0 +1,250 @@
+---
+title       : Preprocessing with Principal Components Analysis (PCA)
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../libraries
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_016_PCA/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+Often you have multiple quantitative variables, and sometimes they'll be highly correlated with each other. We'd like to include fewer variables that capture the relevant information.
+
+## Correlated predictors
+
+```{r libraries, cache=FALSE, message=FALSE}
+library(caret); library(kernlab)
+```
+```{r loadPackage,cache=TRUE,fig.height=3.5,fig.width=3.5}
+data(spam)
+inTrain <- createDataPartition(y=spam$type,
+                              p=0.75, list=FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+
+M <- abs(cor(training[,-58]))   ## cor of all but the outcome
+diag(M) <- 0                    ## ignore the 1s
+which(M > 0.8,arr.ind=T)        ## cor greater than 0.8
+```
+We can see that the variables 'num415' and 'num857' are highly correlated. In the correlation matrix, their correlation is at both (34,32) and (32,34); those are their columns in the `spam` dataset. Probably, there is a phone number that contains those numbers in many emails.
+
+---
+
+## Correlated predictors
+Let's look at columns 34 and 32 in the `spam` dataset.
+
+```{r,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=3.5}
+names(spam)[c(34,32)]
+plot(spam[,34],spam[,32])
+```
+From the plot, we can clearly see that those two numbers (415 and 817) are highly correlated.
+
+We'd like to combine those two variables into a single variable.
+
+---
+
+## Basic PCA idea
+
+* We might not need every predictor
+* A weighted combination of predictors might be better
+* We should pick this combination to capture the "most information" possible
+* Benefits
+  * Reduced number of predictors
+  * Reduced noise (due to averaging)
+
+---
+
+## We could rotate the plot
+
+$$ X = 0.71 \times {\rm num 415} + 0.71 \times {\rm num857}$$
+
+$$ Y = 0.71 \times {\rm num 415} - 0.71 \times {\rm num857}$$
+
+So $X$ is the sum of the two variables, and $Y$ is the difference of the two variables.
+
+(And the factor of 0.71 seems to be scaling $Y$.)
+
+```{r,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=3.5}
+X <- 0.71*training$num415 + 0.71*training$num857
+Y <- 0.71*training$num415 - 0.71*training$num857
+plot(X,Y)
+```
+
+We can see that most of the variability is happening in the x-axis, and most of the points are clustered at 0 on the y-axis.
+
+Adding the variables captures most of the information, and subtracting the variables captures much less information.  The subracted combination is essentially noise.
+
+If we use the sum of the variables, in this case, we'll reduce the number of variables in our dataset, and we'll have this combo variable with reduced noise.
+
+---
+
+## Related problems
+
+You have multivariate variables $X_1,\ldots,X_n$ so $X_1 = (X_{11},\ldots,X_{1m})$
+
+* Find a new set of multivariate variables that are uncorrelated and explain as much variance as possible.
+* If you put all the variables together in one matrix, find the best matrix created with fewer variables (lower rank) that explains the original data.
+
+
+The first goal is <font color="#330066">statistical</font> and the second goal is <font color="#993300">data compression</font>.
+
+---
+
+## Related solutions - PCA/SVD
+
+__SVD -- Singular Value Decomposition__
+
+If $X$ is a matrix with each variable in a column and each observation in a row then the SVD is a "matrix decomposition"
+
+$$ X = UDV^T$$
+
+where the columns of $U$ are orthogonal (left singular vectors), the columns of $V$ are orthogonal (right singluar vectors) and $D$ is a diagonal matrix (singular values). 
+
+__PCA__
+
+The principal components are equal to the right singular values if you first scale (subtract the mean, divide by the standard deviation) the variables.
+
+---
+
+## Principal components in R - prcomp
+Here we use the `prcomp()` function from the stats package to show how to easily accomplish what we just did.
+
+```{r prcomp,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=3.5}
+smallSpam <- spam[,c(34,32)]
+prComp <- prcomp(smallSpam)
+plot(prComp$x[,1],prComp$x[,2])
+```
+
+We've plotted just the first two principal components against each other, and we can see that the plot is identical to the addition vs. subtraction plot we made before.
+
+- The first principle component is similar to the addition of the variables.
+- The second principle component is similar to the subtraction of the variables.
+
+However, principle components analysis can be performed on many variables at once!
+
+---
+
+## Principal components in R - prcomp
+The rotation matrix shows how each principle component was summed.  
+
+```{r ,dependson="prcomp",cache=TRUE,fig.height=3.5,fig.width=3.5}
+prComp$rotation
+```
+
+- PC1: We can see that num415 was scaled by 0.708 and then added to num857, which was scaled by 0.706.
+- PC2: The variables were scaled oppositely and subtracted.
+
+The principle components tell us that the most variability is explained by adding the two variables, and the second most variability is explained by subtracting the two.
+
+I imagine that more variables would result in more PCs:
+```{r prcomp3,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=3.5}
+smallSpam <- spam[,c(34,32,40)]
+prComp3 <- prcomp(smallSpam)
+prComp3$rotation
+plot(prComp3$x[,1],prComp3$x[,2])
+```
+
+---
+
+## PCA on SPAM data
+Let's perform PCA on many variables.
+
+First, we'll sort the output variable into colors (red=spam, black=ham).
+
+Then we'll perform a `prcomp()` on the entire dataset.  We're applying a log10 and added 1 to everything in order to make the data look more gaussian because some of the variables are skewed. We often have to do that for PCA to look sensible.
+
+Then we plot the first two principle components.
+```{r spamPC,dependson="loadPackage",cache=TRUE,fig.height=3.5,fig.width=3.5}
+typeColor <- ((spam$type=="spam")*1 + 1)
+prComp <- prcomp(log10(spam[,-58]+1))
+plot(prComp$x[,1],prComp$x[,2],col=typeColor,xlab="PC1",ylab="PC2")
+```
+PC1 is no longer a simple addition of two variables, but a very complicated combination of all the variables that explains the most variation of the data.
+
+PC2 is the combination that explains the second most variation of the data (and so on).
+
+In the plot, each circle is a single observation, and the red ones are spam.
+
+Looking at the PC1 axis, we can see a good separation between spam and non-spam, in that the spam points tend to have a higher value of PC1.
+
+---
+
+## PCA with caret
+We can also do PCA with the caret package by using the 'method' parameter in the `preProcess()` function to create a preprocess object (using the dataset). We can then apply
+the preprocess object to the `predict()` function (again, using the dataset) to get our principal components. (The number of PCs was chosen in the `preprocess()` function.)
+
+```{r ,dependson="spamPC",cache=TRUE,fig.height=3.5,fig.width=3.5}
+preProc <- preProcess(log10(spam[,-58]+1),method="pca",pcaComp=2)
+spamPC <- predict(preProc,log10(spam[,-58]+1))
+plot(spamPC[,1],spamPC[,2],col=typeColor)
+```
+
+
+---
+
+## Preprocessing with PCA
+Here we fit a model with the principal components. Notice we don't use the full training set for the model, but rather just the principle components of the training set.
+
+```{r pcaCaret,dependson="spamPC",cache=TRUE,fig.height=3.5,fig.width=3.5}
+preProc <- preProcess(log10(training[,-58]+1),method="pca",pcaComp=2)
+trainPC <- predict(preProc,log10(training[,-58]+1))
+modelFit <- train(training$type ~ .,method="glm",data=trainPC)
+```
+
+---
+
+## Preprocessing with PCA
+For the test set, of course, we must use the same preprocess object ('preProc') that we created from the training set.
+
+```{r ,dependson="pcaCaret",cache=TRUE,fig.height=3.5,fig.width=3.5}
+testPC <- predict(preProc,log10(testing[,-58]+1))
+confusionMatrix(testing$type,predict(modelFit,testPC))
+```
+We've just acheived a 90% accuracy with only 2 variables (our two principle components) instead of the 57 variables in the dataset!
+
+---
+
+## Alternative (sets # of PCs)
+Here is a more compact way of writing that code. We're building the predict function right into the `train()` function (from caret). We've passed it the 'training' subset  and the preprocess type 'pca'. Then we can use that model fit to predict the test set ('testing').
+
+```{r ,dependson="pcaCaret",cache=TRUE,fig.height=3.5,fig.width=3.5}
+modelFit <- train(training$type ~ .,method="glm",preProcess="pca",data=training)
+confusionMatrix(testing$type,predict(modelFit,testing))
+```
+
+---
+
+## Final thoughts on PCs
+
+* Most useful for linear-type models
+* Can make it harder to interpret predictors
+* Watch out for outliers! 
+  * Transform first (with logs/Box Cox)
+  * Plot predictors to identify problems
+* For more info see 
+  * Exploratory Data Analysis
+  * [Elements of Statistical Learning](http://statweb.stanford.edu/~tibs/ElemStatLearn/)
