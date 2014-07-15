@@ -1,0 +1,193 @@
+---
+title       : Predicting with regression 
+subtitle    : 
+author      : Jeffrey Leek
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../libraries
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_017_predict_regression/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+
+## Key ideas
+
+* Fit a simple regression model
+* Plug in new covariates and multiply by the coefficients
+* Useful when the linear model is (nearly) correct
+
+__Pros__:
+* Easy to implement
+* Easy to interpret
+
+__Cons__:
+* Often poor performance in nonlinear settings
+
+
+---
+
+## Example: Old faithful eruptions
+
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/yellowstone.png height=400>
+
+Image Credit/Copyright Wally Pacholka [http://www.astropics.com/](http://www.astropics.com/)
+
+---
+
+## Example: Old faithful eruptions
+Geysers have a waiting time between eruptions ('waiting') and they have an eruption duration ('eruption').
+
+Here we make our training and test sets from the faithful dataset.
+
+```{r faith}
+library(caret);data(faithful); set.seed(333)
+inTrain <- createDataPartition(y=faithful$waiting,
+                              p=0.5, list=FALSE)
+trainFaith <- faithful[inTrain,]; testFaith <- faithful[-inTrain,]
+head(trainFaith)
+```
+
+---
+
+## Eruption duration versus waiting time
+
+```{r dependson="faith",fig.height=4,fig.width=4}
+plot(trainFaith$waiting,trainFaith$eruptions,pch=19,col="blue",xlab="Waiting",ylab="Duration")
+```
+We can see that the duration is roughly linear compared to the waiting time.
+
+---
+
+## Fit a linear model 
+
+$$ ED_i = b_0 + b_1 WT_i + e_i $$
+where:
+- $b_0$ is the intercept,
+- $b_1$ is the slope, and
+- $e_i$ is the error.
+
+Because the points don't fall exactly on a line, the error term encompasses everything that we can't explain.
+
+We'll make a linear model (`lm1`) from the training set that predicts the eruption duration from the waiting time.
+
+```{r faithlm,dependson="faith",fig.height=4,fig.width=4}
+lm1 <- lm(eruptions ~ waiting,data=trainFaith)
+summary(lm1)
+```
+
+
+---
+## Model fit
+
+Here is our linear regression. The line is made with the fitted values extracted from `lm1` and the predictor variable ('waiting' from the training set). 
+```{r dependson="faithlm",fig.height=4,fig.width=4}
+plot(trainFaith$waiting,trainFaith$eruptions,pch=19,col="blue",xlab="Waiting",ylab="Duration")
+lines(trainFaith$waiting,lm1$fitted,lwd=3)
+```
+The regression line isn't perfect of course, but it is a good capture of the main feature of the dataset.
+
+---
+
+## Predict a new value
+
+The estimated values are usually denoted by the hat ($\hat{b}$).
+
+$$\hat{ED} = \hat{b}_0 + \hat{b}_1 WT$$
+
+We can use those estimated values to predict any particular value. We don't have the error term because we can't estimate it for this particular value.
+
+Here we'll do that manually and then with the `predict()` function.
+```{r ,dependson="faithlm",fig.height=4,fig.width=4}
+coef(lm1)[1] + coef(lm1)[2]*80
+newdata <- data.frame(waiting=80)
+predict(lm1,newdata)
+```
+We predict that for a waiting time of 80, we expect a duration of 4.
+
+---
+
+## Plot predictions - training and test
+
+```{r ,dependson="faithlm",fig.height=4,fig.width=8}
+par(mfrow=c(1,2))
+plot(trainFaith$waiting,trainFaith$eruptions,pch=19,col="blue",xlab="Waiting",ylab="Duration")
+lines(trainFaith$waiting,predict(lm1),lwd=3)
+plot(testFaith$waiting,testFaith$eruptions,pch=19,col="blue",xlab="Waiting",ylab="Duration")
+lines(testFaith$waiting,predict(lm1,newdata=testFaith),lwd=3)
+```
+
+---
+
+## Get training set/test set errors
+Here we'll calculate the Root Mean Squared Error on our prediction.
+
+```{r ,dependson="faithlm",fig.height=4,fig.width=4}
+# Calculate RMSE on training
+sqrt(sum((lm1$fitted-trainFaith$eruptions)^2))
+
+# Calculate RMSE on test
+sqrt(sum((predict(lm1,newdata=testFaith)-testFaith$eruptions)^2))
+```
+
+So the test set error is only a little worse than the training set. The test set error will always be larger than the training set error. So the test set RMSE represents the added error and variability you get when you move to a new data set.
+
+
+---
+
+## Prediction intervals
+One benefit of using linear modeling is that you can calculate a prediction interval.
+
+Here we calculate a new set of prediction for the test set using the linear model from the training set.
+
+Then if we order the values for the test set and plot the waiting times versus eruption durations, we can use the `matlines()` function (from the base graphics) to draw all three lines at once. (The 'pred1' object contains 3 variables.)
+
+```{r ,dependson="faithlm",fig.height=4,fig.width=4}
+pred1 <- predict(lm1,newdata=testFaith,interval="prediction")
+ord <- order(testFaith$waiting)
+plot(testFaith$waiting,testFaith$eruptions,pch=19,col="blue")
+matlines(testFaith$waiting[ord],pred1[ord,],type="l",,col=c(1,2,2),lty = c(1,1,1), lwd=3)
+```
+
+
+---
+
+## Same process with caret
+Here's how we'd do that with the caret package.
+```{r caretfaith,dependson="faith",fig.height=4,fig.width=4}
+modFit <- train(eruptions ~ waiting,data=trainFaith,method="lm")
+summary(modFit$finalModel)
+```
+
+
+---
+
+## Notes and further reading
+
+* Regression models with multiple covariates can be included
+* Often useful in combination with other models 
+* [Elements of statistical learning](http://www-stat.stanford.edu/~tibs/ElemStatLearn/)
+* [Modern applied statistics with S](http://www.amazon.com/Modern-Applied-Statistics-W-N-Venables/dp/0387954570)
+* [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
