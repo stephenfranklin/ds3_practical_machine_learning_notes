@@ -87,20 +87,21 @@ args(trainControl)
 
 ## trainControl resampling
 The `trainControl()` argument allows you to be much more precise in the way you train models.
+
 * _method_
-  * _boot_ = bootstrapping
-  * _boot632_ = bootstrapping with adjustment
-  * _cv_ = cross validation
-  * _repeatedcv_ = repeated cross validation (See _repeats_.)
-    * sub-cross validation with different random draws.
-  * _LOOCV_ = leave one out cross validation.
-  * Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds.
+    * _boot_ = bootstrapping
+    * _boot632_ = bootstrapping with adjustment
+    * _cv_ = cross validation
+    * _repeatedcv_ = repeated cross validation (See _repeats_.)
+        * sub-cross validation with different random draws.
+    * _LOOCV_ = leave one out cross validation.
+    * Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds.
 * _number_
-  * For boot/cross validation
-  * Number of subsamples to take
+    * For boot/cross validation
+    * Number of subsamples to take
 * _repeats_
-  * Number of times to repeate subsampling
-  * If big this can _slow things down_
+    * Number of times to repeate subsampling
+    * If big this can _slow things down_
 
 ---
 
