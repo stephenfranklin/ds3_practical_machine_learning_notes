@@ -1,0 +1,163 @@
+---
+title       : Random forests
+subtitle    : 
+author      : Jeffrey Leek, Assistant Professor of Biostatistics 
+job         : Johns Hopkins Bloomberg School of Public Health
+logo        : bloomberg_shield.png
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow   # 
+url:
+  lib: ../../libraries
+  assets: ../../assets
+widgets     : [mathjax]            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+---
+
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+# make this an external chunk that can be included in any file
+options(width = 100)
+require(knitr)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', cache=TRUE, dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig_021_random_forests/')
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+
+## Random forests
+Random Forests is an extension to bootstrap aggregating (bagging) for classifation and reggression trees.
+
+We bootstrap samples, that is, we take a resample of our observed data in our training dataset, and then we rebuild classification or regression trees on each of those bootstrap samples. The one difference is that at each split, when we split the data each time in a classification tree, we also bootstrap the variables. In other words, only a subset of the variables is considered at each potential split. This makes for a diverse set of potential trees that can be built.
+The idea is that we grow a large number of trees, and then we vote or average those trees in order to get the prediction for a new outcome.
+
+1. Bootstrap samples
+2. At each split, bootstrap variables
+3. Grow multiple trees and vote
+
+__Pros__:
+
+1. Accuracy
+
+__Cons__:
+
+1. Speed
+2. Interpretability
+    * You might have a large number of trees that are averaged together, and those trees represent bootstrapped samples with bootstrapped nodes that can be difficult to understand.
+3. Overfitting
+    * Difficult to know which trees are leading to the overfitting.
+    * So it's very important to use cross validation with it.
+
+---
+
+## Random forests
+
+<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/forests.png height=400>
+
+[http://www.robots.ox.ac.uk/~az/lectures/ml/lect5.pdf](http://www.robots.ox.ac.uk/~az/lectures/ml/lect5.pdf)
+
+
+---
+
+## Iris data
+```{r libraries, cache=FALSE}
+library(ggplot2); library(caret)
+```
+
+```{r iris, cache=TRUE}
+data(iris)
+inTrain <- createDataPartition(y=iris$Species,
+                              p=0.7, list=FALSE)
+training <- iris[inTrain,]
+testing <- iris[-inTrain,]
+```
+
+
+---
+
+## Random forests
+Here we use the `train()` function from the caret package to fit a model to the training dataset using the random forest method `"rf"`. We use `prox=TRUE`.
+
+```{r forestIris, dependson="irisData",fig.height=4,fig.width=4,cache=TRUE}
+modFit <- train(Species~ .,data=training,method="rf",prox=TRUE)
+modFit
+```
+
+In the summary we see that it used bootsrap resampling and that it tried several different tuning parameters. The tuning parameter in particular `mtry` is the number of tries or repeated trees that it's going to build.
+
+---
+
+## Getting a single tree
+We can look at a specific tree (`k=2`) in our model fit using the `getTree()` function.
+```{r , dependson="forestIris",fig.height=4,fig.width=4}
+getTree(modFit$finalModel,k=2)
+```
+Each row corresponds to a particular split. For each split, there are variables for the left daughter split, the right daughter split, the variable that we're splitting on, the value of that split, and that split's prediction.
+
+---
+
+## Class "centers"
+You can use the "centers" information to would the predictions would be, or the center of the class predictions.
+
+Here we're looking at petal length versus petal width.
+We use `classCenter()` to get the class centers, which are the centers for the predicted values. To do that, we specify the variables in the training set that we want, the row labels, and we send it the model fit with the `prox` variable (which we asked for in the previous fitting).
+We can then plot those class centers to see where they fall in the data.
+First though, we make those class centers into a data.frame, and make the row.names into a variable `$Species`.  
+
+We plot width vs length as solid dots, and color by species. We then plot the class centers as Xs (`shape=4`).
+```{r centers, dependson="forestIris",fig.height=4,fig.width=4}
+irisP <- classCenter(training[,c(3,4)], training$Species, modFit$finalModel$prox)  ## table of class centers
+irisP <- as.data.frame(irisP)
+irisP$Species <- rownames(irisP)  ## make row.names into an actual variable.
+irisP
+p <- qplot(Petal.Width, Petal.Length, col=Species,data=training)
+p + geom_point(aes(x=Petal.Width,y=Petal.Length,col=Species),size=5,shape=4,data=irisP)
+```
+So you can see that the class centers are the center points or averages of each species group.
+
+---
+
+## Predicting new values
+We can then predict new values, using the test set.
+```{r predForest, dependson="centers",fig.height=4,fig.width=4,cache=TRUE}
+pred <- predict(modFit,testing) ## list of predictions of species (a factor w/ 3 levels)
+### Our test set of course contains the correct answers,
+### so we can compare those to our predictions:
+testing$predRight <- pred==testing$Species
+table(pred,testing$Species)
+```
+
+---
+
+## Predicting new values
+Here we plot our predictions against the observations to see which were wrong.
+```{r, dependson="predForest",fig.height=4,fig.width=4}
+qplot(Petal.Width,Petal.Length,colour=predRight,data=testing,main="newdata Predictions")
+```
+We can see the one(s) that were wrong fall right on the border between two of the groups.
+
+---
+
+## Notes and further resources
+
+__Notes__:
+
+* Random forests are usually one of the two top
+performing algorithms along with boosting in prediction contests.
+* Random forests are difficult to interpret but often very accurate. 
+* Care should be taken to avoid overfitting (see [rfcv](http://cran.r-project.org/web/packages/randomForest/randomForest.pdf) funtion)
+
+
+__Further resources__:
+
+* [Random forests](http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm)
+* [Random forest Wikipedia](http://en.wikipedia.org/wiki/Random_forest)
+* [Elements of Statistical Learning](http://www-stat.stanford.edu/~tibs/ElemStatLearn/)
