@@ -34,6 +34,7 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 
 ## Bootstrap aggregating (bagging)
+When you fit complicated models, sometimes if average those models together you get a smoother model fit that gives you a better balance between potential bias and variance. 
 
 __Basic idea__: 
 
@@ -45,44 +46,59 @@ __Notes__:
 * Similar bias 
 * Reduced variance
 * More useful for non-linear functions
-
+    * smoothing
+    * predicting with trees
 
 ---
 
 ## Ozone data
 
+```{r libraries, cache=FALSE}
+library(ElemStatLearn); library(party); library(caret)
+```
+
 ```{r ozoneData, cache=TRUE}
-library(ElemStatLearn); data(ozone,package="ElemStatLearn")
+data(ozone,package="ElemStatLearn")
 ozone <- ozone[order(ozone$ozone),]
+dim(ozone)
 head(ozone)
 ```
 [http://en.wikipedia.org/wiki/Bootstrap_aggregating](http://en.wikipedia.org/wiki/Bootstrap_aggregating)
 
-
+We'll predict temperature as a function of ozone.
 ---
 
 ## Bagged loess
+Here we're going to:
+
+- Resample the data set 10 times.
+- Fit a smooth curve each of those 10 times.
 
 ```{r baggedOzone, dependson="ozoneData",cache=TRUE}
 ll <- matrix(NA,nrow=10,ncol=155)
 for(i in 1:10){
-  ss <- sample(1:dim(ozone)[1],replace=T)
-  ozone0 <- ozone[ss,]; ozone0 <- ozone0[order(ozone0$ozone),]
+  ss <- sample(1:dim(ozone)[1],replace=T)  ## list of 111 w/ replacement.
+  ozone0 <- ozone[ss,] ## df of [111,4]
+  ozone0 <- ozone0[order(ozone0$ozone),] ## df ordered
   loess0 <- loess(temperature ~ ozone,data=ozone0,span=0.2)
   ll[i,] <- predict(loess0,newdata=data.frame(ozone=1:155))
+    ## ith row is the prediction from the loess curve from the ith resample of the data ozone.
 }
 ```
 
 ---
 
 ## Bagged loess
+Here we plot all 10 of those loess curves in gray, and the average of those curves in red.
 
 ```{r, dependson="baggedOzone",fig.height=4.5,fig.width=4.5}
 plot(ozone$ozone,ozone$temperature,pch=19,cex=0.5)
 for(i in 1:10){lines(1:155,ll[i,],col="grey",lwd=2)}
 lines(1:155,apply(ll,2,mean),col="red",lwd=2)
 ```
+The gray lines overcapture the variability, that is, they are too curvy. The average of them is smoother and closer to the middle of the dataset; it's the red line, which is the bagged loess curve.
 
+The bagging estimate will always have lower variability but similar bias compared to the individual model fits.
 
 ---
 
@@ -97,8 +113,8 @@ lines(1:155,apply(ll,2,mean),col="red",lwd=2)
 ---
 
 ## More bagging in caret
-
-```{r bag1}
+You can build your own bagging function.
+```{r bag1, cache=TRUE}
 predictors = data.frame(ozone=ozone$ozone)
 temperature = ozone$temperature
 treebag <- bag(predictors, temperature, B = 10,
@@ -114,6 +130,10 @@ http://www.inside-r.org/packages/cran/caret/docs/nbBag
 
 ## Example of custom bagging (continued)
 
+- The gray dots are observed values.
+- The red dots are from a single (`[[1]]`) conditional regression tree fit.
+- The blue dots are from the bagged regression fit.
+
 ```{r,dependson="bag1",fig.height=4,fig.width=4}
 plot(ozone$ozone,temperature,col='lightgrey',pch=19)
 points(ozone$ozone,predict(treebag$fits[[1]]$fit,predictors),pch=19,col="red")
@@ -125,13 +145,20 @@ points(ozone$ozone,predict(treebag,predictors),pch=19,col="blue")
 
 ## Parts of bagging
 
+Let's see how a bagging function in R works.
+
+The `ctreeBag()` function fits an outcome (`y`) to a predictor (`x`) by using the `ctree()` function to train a conditional regression tree on the dataset. The model fit from `ctree()` is what is returned to `ctreeBag$fit`.
+
 ```{r}
+
 ctreeBag$fit
 ```
 
 ---
 
 ## Parts of bagging
+The prediction function takes in the object from `ctreeBag$fit`,  the model fit from `ctree()`, and a new dataset `x`, and makes a new prediction. 
+It calculates, each time, the `treeresponse()` (the outcome) from the model fit and the new data `x`. It then calculates a probability matrix `probMatrix` and returns either 1) the observered levels that it predicts `obsLevels`, or 2) the predicted response from `treeresponse()`.
 
 ```{r}
 ctreeBag$pred
@@ -141,6 +168,9 @@ ctreeBag$pred
 ---
 
 ## Parts of bagging
+The aggregation then takes those values and averages them together.
+
+It uses `lapply()` to get the prediction from each of the many  model fits, and then it binds them into one big matrix (where each row is a prediction from one model fit). Then it takes the median of every value, in other words, it takes the median prediction from each of the different model fits across all the bootstrap samples.
 
 ```{r}
 ctreeBag$aggregate
