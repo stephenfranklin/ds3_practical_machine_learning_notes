@@ -115,9 +115,8 @@ We can use the `dummyVars()` function from the caret package to easily turn a fa
 ```{r dummyVar,dependson="loadData"}
 table(training$jobclass)
 dummies <- dummyVars(wage ~ jobclass,data=training)
-head(predict(dummies,newdata=training))
+head(predict(dummies,newdata=training),20)
 ```
-
 
 
 ---

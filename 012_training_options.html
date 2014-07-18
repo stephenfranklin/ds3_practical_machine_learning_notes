@@ -124,7 +124,31 @@ NULL</code></pre>
 </div>
 <div id="traincontrol-resampling" class="section level2">
 <h2>trainControl resampling</h2>
-<p>The <code>trainControl()</code> argument allows you to be much more precise in the way you train models. * <em>method</em> * <em>boot</em> = bootstrapping * <em>boot632</em> = bootstrapping with adjustment * <em>cv</em> = cross validation * <em>repeatedcv</em> = repeated cross validation (See <em>repeats</em>.) * sub-cross validation with different random draws. * <em>LOOCV</em> = leave one out cross validation. * Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds. * <em>number</em> * For boot/cross validation * Number of subsamples to take * <em>repeats</em> * Number of times to repeate subsampling * If big this can <em>slow things down</em></p>
+<p>The <code>trainControl()</code> argument allows you to be much more precise in the way you train models.</p>
+<ul>
+<li><em>method</em>
+<ul>
+<li><em>boot</em> = bootstrapping</li>
+<li><em>boot632</em> = bootstrapping with adjustment</li>
+<li><em>cv</em> = cross validation</li>
+<li><em>repeatedcv</em> = repeated cross validation (See <em>repeats</em>.)
+<ul>
+<li>sub-cross validation with different random draws.</li>
+</ul></li>
+<li><em>LOOCV</em> = leave one out cross validation.</li>
+<li>Remember that there is a bias-variance trade-off between using a large number of folds and a small number of folds.</li>
+</ul></li>
+<li><em>number</em>
+<ul>
+<li>For boot/cross validation</li>
+<li>Number of subsamples to take</li>
+</ul></li>
+<li><em>repeats</em>
+<ul>
+<li>Number of times to repeate subsampling</li>
+<li>If big this can <em>slow things down</em></li>
+</ul></li>
+</ul>
 <hr />
 </div>
 <div id="setting-the-seed" class="section level2">
@@ -158,7 +182,7 @@ Summary of sample sizes: 3451, 3451, 3451, 3451, 3451, 3451, ...
 Resampling results
 
   Accuracy  Kappa  Accuracy SD  Kappa SD
-  0.9       0.8    0.008        0.02    
+  0.9       0.8    0.007        0.01    
 
  </code></pre>
 <hr />
@@ -182,7 +206,7 @@ Summary of sample sizes: 3451, 3451, 3451, 3451, 3451, 3451, ...
 Resampling results
 
   Accuracy  Kappa  Accuracy SD  Kappa SD
-  0.9       0.8    0.008        0.02    
+  0.9       0.8    0.007        0.01    
 
  </code></pre>
 <hr />
