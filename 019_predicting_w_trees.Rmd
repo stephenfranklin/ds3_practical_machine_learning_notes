@@ -34,6 +34,16 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 
 ## Key ideas
+The Classification and Regression Tree (CART) algorithm uses a decision tree as a predictive model which maps observations about an item to conclusions about the item's target value.
+
+In R, the library caret contains these CART methods, which you can find under `?train_model_list`:
+
+- Bagged CART (method = 'treebag')
+- CART (method = 'rpart')
+- CART (method = 'rpart2')
+- Cost-Sensitive CART (method = 'rpartCost')
+- as well as many other tree algorithms.
+
 If you have a bunch of variables that you want to use to predict an outcome, you can use each of those variables to split the outcome into different groups.
 
 * Iteratively split variables into groups
