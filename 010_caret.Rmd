@@ -134,7 +134,7 @@ Then we can predict our test data like so:
 
 ```{r predictions, dependson="training",cache=TRUE}
 predictions <- predict(modelFit,newdata=testing)
-predictions
+head(predictions,30)
 ```
 
 --- 

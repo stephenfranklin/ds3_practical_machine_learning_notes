@@ -70,6 +70,13 @@ That last command shows us that the folds were split while preserving  the origi
 
 This means that we can easily know which of the indices are corresponding to the training and test sets within those k folds. 
 
+Remember, As $K \uparrow$, bias $\downarrow$ and variance $\uparrow$.  (That is, out-of-sample bias and variance.)
+
+In other words, a large K, will have a small bias, or therefore a good estimate of the bias between the predicted values and the true values. But it will be highly variable, depending on the random subsets.
+A small K, will have a large bias, and therefore a worse estimate of the out-of-sample error rate.
+
+When k=n (the number of observations), the k-fold cross-validation is exactly the leave-one-out cross-validation. So leave-one-out cross-validation has low bias, high variance.
+
 ---
 
 ## SPAM Example: Return test

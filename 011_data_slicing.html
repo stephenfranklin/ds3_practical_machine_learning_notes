@@ -83,6 +83,9 @@ sapply(folds,length)  ## Check the lengths of our folds.</code></pre>
 <pre><code> [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
 <p>That last command shows us that the folds were split while preserving the original order of the data set; they weren’t re-ordered. That is, the first 4141 samples are in the first fold, and the very first sample is still the first on the list.</p>
 <p>This means that we can easily know which of the indices are corresponding to the training and test sets within those k folds.</p>
+<p>Remember, As <span class="math">\(K \uparrow\)</span>, bias <span class="math">\(\downarrow\)</span> and variance <span class="math">\(\uparrow\)</span>. (That is, out-of-sample bias and variance.)</p>
+<p>In other words, a large K, will have a small bias, or therefore a good estimate of the bias between the predicted values and the true values. But it will be highly variable, depending on the random subsets. A small K, will have a large bias, and therefore a worse estimate of the out-of-sample error rate.</p>
+<p>When k=n (the number of observations), the k-fold cross-validation is exactly the leave-one-out cross-validation. So leave-one-out cross-validation has low bias, high variance.</p>
 <hr />
 </div>
 <div id="spam-example-return-test" class="section level2">

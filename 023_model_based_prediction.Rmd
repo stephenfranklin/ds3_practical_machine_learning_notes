@@ -177,7 +177,8 @@ which says that the prior probability times the probability of each feature by i
 
 This is a naive assumption which is how it gets its name, but it works pretty well.
 
-It's particularly useful when have a very large number of features that are binary or categorical, such as text classification.
+It's particularly useful when we have a very large number of features that are binary or categorical, such as text classification.
+
 ---
 
 ## Example: Iris Data

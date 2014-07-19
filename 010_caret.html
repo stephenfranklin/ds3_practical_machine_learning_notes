@@ -139,7 +139,7 @@ Summary of sample sizes: 3451, 3451, 3451, 3451, 3451, 3451, ...
 Resampling results
 
   Accuracy  Kappa  Accuracy SD  Kappa SD
-  0.9       0.8    0.01         0.02    
+  0.9       0.8    0.007        0.01    
 
  </code></pre>
 <p>The <code>train()</code> function will test the model (in this case, a glm) in a variety of ways. - In this case, it decided to use <code>Resampling: Bootstrapped</code> with 25 replicants. - It also corrects for the potential bias that might come from bootstrapping.</p>
@@ -155,145 +155,43 @@ Call:  NULL
 
 Coefficients:
       (Intercept)               make            address                all              num3d  
-        -1.66e+00          -4.10e-01          -1.34e-01           2.90e-02           1.04e+00  
+        -1.38e+00          -2.84e-01          -1.59e-01           5.76e-02           2.27e+00  
               our               over             remove           internet              order  
-         6.73e-01           1.46e+00           2.04e+00           8.96e-01           5.41e-01  
+         4.87e-01           1.13e+00           2.16e+00           4.00e-01           3.60e-01  
              mail            receive               will             people             report  
-         1.03e-01          -2.40e-01          -1.27e-01           1.91e-04           2.05e-01  
+         1.13e-01          -4.25e-01          -1.08e-01          -2.12e-01           3.22e-02  
         addresses               free           business              email                you  
-         8.73e-01           1.12e+00           1.04e+00           1.86e-01           9.72e-02  
+         2.82e+00           9.48e-01           7.55e-01           7.82e-02           5.42e-02  
            credit               your               font             num000              money  
-         1.25e+00           1.54e-01           1.14e-01           2.16e+00           6.98e-01  
+         9.24e-01           2.60e-01           2.02e-01           2.24e+00           3.60e-01  
                hp                hpl             george             num650                lab  
-        -2.46e+00          -1.15e+00          -2.07e+01           6.35e-01          -3.71e+00  
+        -2.19e+00          -1.24e+00          -9.29e+00           3.88e-01          -2.24e+00  
              labs             telnet             num857               data             num415  
-        -1.12e-01          -4.19e+00           2.11e+00          -8.55e-01           1.07e+00  
+        -2.59e-01          -1.44e-01           1.96e+00          -6.95e-01           1.02e+00  
             num85         technology            num1999              parts                 pm  
-        -2.06e+00           1.30e+00          -3.88e-02          -6.06e-01          -1.05e+00  
+        -2.04e+00           1.14e+00           9.76e-03          -5.91e-01          -7.87e-01  
            direct                 cs            meeting           original            project  
-        -5.39e-01          -4.88e+01          -2.37e+00          -8.61e-01          -1.54e+00  
+        -1.41e-01          -5.36e+01          -3.45e+00          -9.56e-01          -1.49e+00  
                re                edu              table         conference      charSemicolon  
-        -9.04e-01          -2.06e+00          -1.37e+00          -4.32e+00          -1.38e+00  
+        -7.15e-01          -1.39e+00          -1.78e+00          -3.49e+00          -1.33e+00  
  charRoundbracket  charSquarebracket    charExclamation         charDollar           charHash  
-        -4.11e-01          -1.38e+00           3.92e-01           5.36e+00           3.16e+00  
+        -1.66e-01          -5.87e-01           2.16e-01           5.48e+00           2.44e+00  
        capitalAve        capitalLong       capitalTotal  
-         8.01e-02           5.48e-03           1.32e-03  
+        -6.94e-03           9.47e-03           9.67e-04  
 
 Degrees of Freedom: 3450 Total (i.e. Null);  3393 Residual
 Null Deviance:      4630 
-Residual Deviance: 1270     AIC: 1390</code></pre>
+Residual Deviance: 1410     AIC: 1520</code></pre>
 <hr />
 </div>
 <div id="spam-example-prediction" class="section level2">
 <h2>SPAM Example: Prediction</h2>
 <p>Then we can predict our test data like so:</p>
 <pre class="r"><code>predictions &lt;- predict(modelFit,newdata=testing)
-predictions</code></pre>
-<pre><code>   [1] spam    spam    spam    spam    spam    spam    nonspam spam    nonspam spam    spam   
-  [12] nonspam nonspam spam    spam    spam    spam    spam    spam    nonspam spam    nonspam
-  [23] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    nonspam
-  [34] spam    spam    spam    nonspam spam    spam    spam    spam    spam    spam    spam   
-  [45] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
-  [56] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    nonspam
-  [67] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
-  [78] spam    spam    spam    nonspam spam    spam    nonspam nonspam spam    spam    spam   
-  [89] spam    spam    spam    spam    spam    spam    spam    nonspam spam    nonspam spam   
- [100] spam    spam    spam    spam    spam    spam    spam    spam    spam    nonspam spam   
- [111] spam    spam    spam    spam    spam    spam    spam    nonspam spam    spam    nonspam
- [122] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [133] spam    nonspam spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [144] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [155] spam    spam    spam    spam    nonspam spam    spam    spam    spam    spam    spam   
- [166] spam    spam    spam    spam    spam    nonspam spam    spam    spam    spam    spam   
- [177] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [188] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [199] spam    spam    spam    spam    spam    spam    nonspam spam    spam    spam    spam   
- [210] spam    spam    spam    spam    spam    spam    spam    spam    spam    nonspam spam   
- [221] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [232] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [243] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [254] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [265] spam    spam    spam    spam    spam    spam    spam    spam    nonspam nonspam spam   
- [276] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [287] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [298] spam    spam    spam    spam    spam    nonspam spam    spam    spam    nonspam spam   
- [309] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [320] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [331] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [342] nonspam spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [353] spam    spam    spam    spam    spam    nonspam spam    spam    spam    spam    spam   
- [364] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [375] spam    spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [386] spam    spam    spam    spam    nonspam nonspam spam    spam    spam    spam    spam   
- [397] nonspam nonspam spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [408] spam    spam    nonspam spam    spam    spam    spam    nonspam spam    spam    spam   
- [419] nonspam nonspam spam    nonspam spam    spam    spam    spam    spam    spam    spam   
- [430] nonspam nonspam spam    spam    spam    spam    spam    spam    spam    spam    nonspam
- [441] nonspam spam    spam    spam    spam    spam    spam    spam    spam    spam    spam   
- [452] spam    spam    spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [463] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [474] nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam
- [485] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [496] nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam
- [507] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [518] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [529] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [540] nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam
- [551] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [562] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [573] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [584] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [595] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [606] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [617] spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [628] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [639] spam    nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam
- [650] nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam
- [661] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [672] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam spam   
- [683] nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam
- [694] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam spam   
- [705] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [716] nonspam spam    spam    nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam
- [727] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [738] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [749] nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam spam    nonspam
- [760] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam
- [771] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [782] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [793] nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam
- [804] nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam
- [815] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [826] nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam
- [837] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [848] nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam
- [859] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam
- [870] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [881] nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [892] spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [903] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [914] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [925] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [936] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [947] spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [958] nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [969] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [980] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
- [991] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1002] nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1013] nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam
-[1024] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1035] nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1046] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1057] nonspam nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam
-[1068] nonspam spam    nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam
-[1079] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1090] nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1101] spam    spam    nonspam nonspam nonspam nonspam nonspam nonspam spam    nonspam nonspam
-[1112] nonspam nonspam nonspam spam    nonspam nonspam nonspam nonspam spam    nonspam nonspam
-[1123] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1134] nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam nonspam
-[1145] nonspam nonspam nonspam nonspam nonspam nonspam
+head(predictions,30)</code></pre>
+<pre><code> [1] spam    spam    spam    spam    spam    nonspam spam    spam    spam    spam    spam    spam   
+[13] spam    spam    spam    spam    spam    spam    spam    spam    nonspam spam    nonspam spam   
+[25] spam    spam    spam    spam    spam    spam   
 Levels: nonspam spam</code></pre>
 <hr />
 </div>
@@ -307,24 +205,24 @@ Levels: nonspam spam</code></pre>
 
           Reference
 Prediction nonspam spam
-   nonspam     658   41
-   spam         39  412
+   nonspam     669   48
+   spam         28  405
                                         
-               Accuracy : 0.93          
-                 95% CI : (0.914, 0.944)
+               Accuracy : 0.934         
+                 95% CI : (0.918, 0.948)
     No Information Rate : 0.606         
     P-Value [Acc &gt; NIR] : &lt;2e-16        
                                         
-                  Kappa : 0.854         
- Mcnemar's Test P-Value : 0.911         
+                  Kappa : 0.861         
+ Mcnemar's Test P-Value : 0.0293        
                                         
-            Sensitivity : 0.944         
-            Specificity : 0.909         
-         Pos Pred Value : 0.941         
-         Neg Pred Value : 0.914         
+            Sensitivity : 0.960         
+            Specificity : 0.894         
+         Pos Pred Value : 0.933         
+         Neg Pred Value : 0.935         
              Prevalence : 0.606         
-         Detection Rate : 0.572         
-   Detection Prevalence : 0.608         
+         Detection Rate : 0.582         
+   Detection Prevalence : 0.623         
       Balanced Accuracy : 0.927         
                                         
        'Positive' Class : nonspam       
