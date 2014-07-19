@@ -35,9 +35,9 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 ## Basic idea
 
-1. Take lots of (possibly) weak predictors
-2. Weight them and add them up
-3. Get a stronger predictor
+1. Take lots of (possibly) weak predictors.
+2. Weight them and add them up.
+3. Average them and get a stronger predictor.
 
 
 ---
@@ -48,36 +48,52 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
   * Examples: All possible trees, all possible regression models, all possible cutoffs.
 2. Create a classifier that combines classification functions:
 $f(x) = \rm{sgn}\left(\sum_{t=1}^T \alpha_t h_t(x)\right)$.
-  * Goal is to minimize error (on training set)
-  * Iterative, select one $h$ at each step
-  * Calculate weights based on errors
-  * Upweight missed classifications and select next $h$
+
+* where:
+    * $\alpha_t$ is a weight,
+    * $h_t(x)$ is a classifier,
+    * $f(x)$ is the prediction for a new point.
   
-[Adaboost on Wikipedia](http://en.wikipedia.org/wiki/AdaBoost)
+* Goal is to minimize error (on training set)
+    * Iterative, select one $h$ at each step,
+    * calculate weights for the next step, based on errors from the previous $h$,
+    * then upweight missed classifications and select next $h$.
+  
+The most famous boosting algorithm is Adaboost.
+[http://en.wikipedia.org/wiki/AdaBoost](http://en.wikipedia.org/wiki/AdaBoost)
 
 [http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf](http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf)
 
 ---
 
 ## Simple example
+Suppose we're trying to separate the blue + signs from the red - signs, and we have two variables to predict with. Here we've plotted variable 1 on the x-axis and variable 2 on the y-axis. We'll make a very simple classifier which simply draws a straight orthogonal line.
 
-<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada1.png height=450>
+<img class=center src="https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada1.png" height=450>
 
 [http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf](http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf)
 
 ---
 
 ## Round 1: adaboost
+First we'll define a vertical line for which anything to its left is a blue + and anything to its right is a red -.
 
-<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/adar1.png height=450>
+<img class=center src="https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/adar1.png" height=450>
+
+You can see that we've misclassified three points at the top right. We calculate the error rate which says we're missing 30% of the points, and we'll upweight the missed points.
 
 [http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf](http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf)
 
 ---
 
 ## Round 2 & 3
+Then in round 2, we build the next classifier using those weights, and this classifier draws a new vertical line that ensures those weighted points are on its left.
 
-<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada2.png height=450>
+Now there are 3 new points (red -) that are misclassified. The error rate is calculated and used to upweight hose 3 points for the next round.
+ 
+<img class=center src="https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada2.png" height=450>
+
+In round 3, a horizontal line is drawn to ensure all the weighted points are separated. Again there are misclassified points, and we calculate an error rate, and upweight them. But we've reached our last round. 
 
 [http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf](http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf)
 
@@ -85,8 +101,9 @@ $f(x) = \rm{sgn}\left(\sum_{t=1}^T \alpha_t h_t(x)\right)$.
 ---
 
 ## Completed classifier
+Now we classify a weighted combination which sums our 3 weighted classifiers. The combined classifier draws a more complicated line which correctly classifies all the points.  
 
-<img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada3.png height=450>
+<img class=center src="https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/ada3.png" height=450>
 
 [http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf](http://webee.technion.ac.il/people/rmeir/BoostingTutorial.pdf)
 
@@ -109,9 +126,10 @@ $f(x) = \rm{sgn}\left(\sum_{t=1}^T \alpha_t h_t(x)\right)$.
 
 ## Wage example
 ```{r libraries, cache=FALSE}
-library(ISLR); data(Wage); library(ggplot2); library(caret);
+library(ISLR); library(ggplot2); library(caret);
 ```
 ```{r wage, cache=TRUE}
+data(Wage)
 Wage <- subset(Wage,select=-c(logwage))
 inTrain <- createDataPartition(y=Wage$wage,
                               p=0.7, list=FALSE)
@@ -122,21 +140,28 @@ training <- Wage[inTrain,]; testing <- Wage[-inTrain,]
 ---
 
 ## Fit the model
+Here we'll use `method="gbm"` which does boosting with trees.
 
 ```{r, dependson="wage", cache=TRUE}
 modFit <- train(wage ~ ., method="gbm",data=training,verbose=FALSE)
 print(modFit)
 ```
 
+When we print the model fit, you can see that there are different numbers of trees that are used, and different interaction depths, which are used together to build a boosted version of regression trees.
+
 ---
 
 ## Plot the results
+Here we plot the predicted results from the test set using our model fit versus the outcome wage from the test set. 
 
 ```{r, dependson="wage", fig.height=4,fig.width=4}
 qplot(predict(modFit,testing),wage,data=testing)
 ```
 
 
+It's a reasonably good prediction, though there is still a lot of variability.
+
+The basic idea for fitting a boosted algorithm is to take these weak classifiers and average them together with weights in order to get a better classifier.
 
 ---
 
