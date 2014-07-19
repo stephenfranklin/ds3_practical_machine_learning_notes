@@ -35,12 +35,13 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 
 ## Basic idea
 
-1. Assume the data follow a probabilistic model
-2. Use Bayes' theorem to identify optimal classifiers
+1. Assume the data follow a probabilistic model.
+2. Use Bayes' theorem to identify optimal classifiers.
 
 __Pros:__
 
-* Can take advantage of structure of the data
+* Can take advantage of structure of the data,
+    * say, if they follow a specific distribution.
 * May be computationally convenient
 * Are reasonably accurate on real problems
 
@@ -56,11 +57,13 @@ __Cons:__
 
 1. Our goal is to build parametric model for conditional distribution $P(Y = k | X = x)$
 
-2. A typical approach is to apply [Bayes theorem](http://en.wikipedia.org/wiki/Bayes'_theorem):
+* where $P()$ is the probability that the outcome $Y$ equals some specific class $k$, given ($|$) a particular set of predictor variables so that our $X$ variables equal $x$.
+
+2. A typical approach is to apply Bayes theorem:
 $$ Pr(Y = k | X=x) = \frac{Pr(X=x|Y=k)Pr(Y=k)}{\sum_{\ell=1}^K Pr(X=x |Y = \ell) Pr(Y=\ell)}$$
 $$Pr(Y = k | X=x) = \frac{f_k(x) \pi_k}{\sum_{\ell = 1}^K f_{\ell}(x) \pi_{\ell}}$$
 
-3. Typically prior probabilities $\pi_k$ are set in advance.
+3. Typically prior probabilities $\pi_k$ are set in advance from the data.
 
 4. A common choice for $f_k(x) = \frac{1}{\sigma_k \sqrt{2 \pi}}e^{-\frac{(x-\mu_k)^2}{\sigma_k^2}}$, a Gaussian distribution
 
@@ -68,16 +71,25 @@ $$Pr(Y = k | X=x) = \frac{f_k(x) \pi_k}{\sum_{\ell = 1}^K f_{\ell}(x) \pi_{\ell}
 
 6. Classify to the class with the highest value of $P(Y = k | X = x)$
 
+[http://en.wikipedia.org/wiki/Bayes'_theorem](http://en.wikipedia.org/wiki/Bayes'_theorem)
+
 ---
 
 ## Classifying using the model
 
 A range of models use this approach
 
-* Linear discriminant analysis assumes $f_k(x)$ is multivariate Gaussian with same covariances
-* Quadratic discrimant analysis assumes $f_k(x)$ is multivariate Gaussian with different covariances
+* Linear discriminant analysis assumes $f_k(x)$ is a multivariate Gaussian distribution
+    * the features have $f_k(x)$ within each class,
+    * with the same covariance matrix for every class.
+    * It draws lines through the data, the covariate space.
+* Quadratic discrimant analysis assumes $f_k(x)$ is multivariate Gaussian with different covariances.
+    * Different covariance matrices for classes.
+    * It draws quadratic curves through the data.
 * [Model based prediction](http://www.stat.washington.edu/mclust/) assumes more complicated versions for the covariance matrix 
-* Naive Bayes assumes independence between features for model building
+* Naive Bayes assumes independence between features for model building.
+    * It may not be true that the features are independent.
+    * But it still might be a useful model for prediction.
 
 http://statweb.stanford.edu/~tibs/ElemStatLearn/
 
@@ -85,11 +97,21 @@ http://statweb.stanford.edu/~tibs/ElemStatLearn/
 ---
 
 ## Why linear discriminant analysis?
+If we consider the ratio of the probabilities of two classes ($k/j$), and we take the log of that, it becomes a *monotone* function, meaning that as the ratio increases so will the log of the ratio.  
 
 $$log \frac{Pr(Y = k | X=x)}{Pr(Y = j | X=x)}$$
+
+We can write those quantities out using Bayes theorem. We get the log of the ratio of the two gaussian densities plus the log of the ratio of the two prior probabilites:
 $$ = log \frac{f_k(x)}{f_j(x)} + log \frac{\pi_k}{\pi_j}$$
+
+We can expand the gaussian density terms. The expanded terms depend on the parameters of the gaussion (or normal) distributions for each class. . .
 $$ = log \frac{\pi_k}{\pi_j} - \frac{1}{2}(\mu_k + \mu_j)^T \Sigma^{-1}(\mu_k + \mu_j)$$
-$$ + x^T \Sigma^{-1} (\mu_k - \mu_j)$$
+
+plus a linear term ($x$ times a coefficient $\Sigma$):
+$$+ x^T \Sigma^{-1} (\mu_k - \mu_j)$$
+
+
+That results in lines that are drawn through the data for which a variable will have a higher probability of being in one particular class on one side of the line, or a higher probability of being in another class if it's on the other side of the line.
 
 http://statweb.stanford.edu/~tibs/ElemStatLearn/
 
@@ -97,8 +119,12 @@ http://statweb.stanford.edu/~tibs/ElemStatLearn/
 ---
 
 ## Decision boundaries
-
+The decision boundaries for these sorts of prediction models look like this:
 <img class="center" src="https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/ldaboundary.png" height=500>
+
+The left figure show three gaussian distribution (one for each of three classes).
+
+The right figure shows the lines which separate the probabilities for each class. (It also shows the observed data, some of which is misclassified.)
 
 ---
 
@@ -106,6 +132,14 @@ http://statweb.stanford.edu/~tibs/ElemStatLearn/
 
 $$\delta_k(x) = x^T \Sigma^{-1} \mu_k - \frac{1}{2}\mu_k \Sigma^{-1}\mu_k + log(\mu_k)$$
 
+where:
+
+* $\mu_k$ is the mean of class $k$ for all the features,
+* $\Sigma^{-1}$ is the inverse of the covariance matrix for that class; same for all classes.
+* $x^T \Sigma^{-1} \mu_k$ is the linear term where
+    * $x$ is the predictor.
+
+We plug in our new data value $x$ into this function and we pick the value of $k$ that produces the largest value of this particular discriminant function, and that's how we choose a class.
 
 * Decide on class based on $\hat{Y}(x) = argmax_k \delta_k(x)$
 * We usually estimate parameters with maximum likelihood
@@ -114,6 +148,7 @@ $$\delta_k(x) = x^T \Sigma^{-1} \mu_k - \frac{1}{2}\mu_k \Sigma^{-1}\mu_k + log(
 ---
 
 ## Naive Bayes
+Naive Bayes simplifies the problem. Again, suppose we're modeling whether $Y$ is in class $k$, and we have many predictor variables $X$. We can use Bayes theorem to say that the probability that the class is $k$ given all these variables $X$ that we've observed is the prior probability that we're in class $\pi_k$ times the probability for all these features given we're in class $k$ divided by some constant. This probability is proportional to the prior probability times the probability of the features given we're in class $k$.
 
 Suppose we have many predictors, we would want to model: $P(Y = k | X_1,\ldots,X_m)$
 
@@ -122,16 +157,27 @@ We could use Bayes Theorem to get:
 $$P(Y = k | X_1,\ldots,X_m) = \frac{\pi_k P(X_1,\ldots,X_m| Y=k)}{\sum_{\ell = 1}^K P(X_1,\ldots,X_m | Y=k) \pi_{\ell}}$$
 $$ \propto \pi_k P(X_1,\ldots,X_m| Y=k)$$
 
-This can be written:
+In other words, if you pick the largest *value* of $\pi_k P(X_1,\ldots,X_m| Y=k)$  
+it will be the same as picking the largest *probability* of  
+$$\frac{\pi_k P(X_1,\ldots,X_m| Y=k)}{\sum_{\ell = 1}^K P(X_1,\ldots,X_m | Y=k) \pi_{\ell}}$$
+because the term in the denominator is just a constant for all the different probabilities.
+
+This can be written as a conditioning argument:
 
 $$P(X_1,\ldots,X_m, Y=k) = \pi_k P(X_1 | Y = k)P(X_2,\ldots,X_m | X_1,Y=k)$$
 $$ = \pi_k P(X_1 | Y = k) P(X_2 | X_1, Y=k) P(X_3,\ldots,X_m | X_1,X_2, Y=k)$$
 $$ = \pi_k P(X_1 | Y = k) P(X_2 | X_1, Y=k)\ldots P(X_m|X_1\ldots,X_{m-1},Y=k)$$
+So each of the features may be dependent on one another. But if we assume they're not, then it makes things easier.
 
 We could make an assumption to write this:
 
 $$ \approx \pi_k P(X_1 | Y = k) P(X_2 | Y = k)\ldots P(X_m |,Y=k)$$
 
+which says that the prior probability times the probability of each feature by itself conditional on being in each class. 
+
+This is a naive assumption which is how it gets its name, but it works pretty well.
+
+It's particularly useful when have a very large number of features that are binary or categorical, such as text classification.
 ---
 
 ## Example: Iris Data
@@ -160,30 +206,37 @@ dim(training); dim(testing)
 ---
 
 ## Build predictions
-
+We'll build a linear discriminant analysis model as well as a naive bayes model for the iris dataset.
 ```{r fit,dependson="trainingTest"}
 modlda = train(Species ~ .,data=training,method="lda")
 modnb = train(Species ~ ., data=training,method="nb")
-plda = predict(modlda,testing); pnb = predict(modnb,testing)
+plda = predict(modlda,testing)
+pnb = predict(modnb,testing)
 table(plda,pnb)
 ```
-
+The table compares the predictions of the two models, and we can see that they agree for all but one value.
 
 ---
 
 ## Comparison of results
-
+And here we show where those predictions lie.
 ```{r,dependson="fit",fig.height=4,fig.width=4}
 equalPredictions = (plda==pnb)
 qplot(Petal.Width,Sepal.Width,colour=equalPredictions,data=testing)
 ```
+The one differing prediction lies on the border between two species groups.
 
 ---
 
 ## Notes and further reading
 
-* [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)
-* [Elements of Statistical Learning](http://www-stat.stanford.edu/~tibs/ElemStatLearn/)
-* [Model based clustering](http://www.stat.washington.edu/raftery/Research/PDF/fraley2002.pdf)
-* [Linear Discriminant Analysis](http://en.wikipedia.org/wiki/Linear_discriminant_analysis)
-* [Quadratic Discriminant Analysis](http://en.wikipedia.org/wiki/Quadratic_classifier)
+* Introduction to statistical learning
+(http://www-bcf.usc.edu/~gareth/ISL/)
+* Elements of Statistical Learning
+(http://www-stat.stanford.edu/~tibs/ElemStatLearn/)
+* Model based clustering
+(http://www.stat.washington.edu/raftery/Research/PDF/fraley2002.pdf)
+* Linear Discriminant Analysis
+(http://en.wikipedia.org/wiki/Linear_discriminant_analysis)
+* Quadratic Discriminant Analysis
+(http://en.wikipedia.org/wiki/Quadratic_classifier)
