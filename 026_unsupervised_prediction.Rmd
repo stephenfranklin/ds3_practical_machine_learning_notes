@@ -60,10 +60,14 @@ testing <- iris[-inTrain,]
 dim(training); dim(testing)
 ```
 
+Here we've divided the data into training and test sets like we have in previous lectures, but we're going to ignore the 'Species' clusters.
 
 ---
 
 ## Cluster with k-means
+In Exploratory Data Analysis, we learned about K-means clustering. We'll do that again here, forming 3 clusters while deliberately ignoring the Species variable.
+
+Then we'll plot the data, assigning colors to the clusters.
 
 ```{r kmeans,dependson="iris",fig.height=4,fig.width=6}
 kMeans1 <- kmeans(subset(training,select=-c(Species)),centers=3)
@@ -75,21 +79,27 @@ qplot(Petal.Width,Petal.Length,colour=clusters,data=training)
 ---
 
 ## Compare to real labels
+We can see that our clusters correspond well to the Species variable.
 
 ```{r ,dependson="kmeans"}
 table(kMeans1$cluster,training$Species)
 ```
 
-
+The idea is that we wouldn't know that the clusters were species, and so we'd just name them something.
 
 ---
 
 ## Build predictor
 
+We'll fit a model on those clusters with the training set, and using a classification method.
+
 ```{r modelFit,dependson="kmeans"}
 modFit <- train(clusters ~.,data=subset(training,select=-c(Species)),method="rpart")
 table(predict(modFit,training),training$Species)
 ```
+
+The prediction on the training set wasn't so hot. That's because there is both error and variation in the prediction building, as well as in the cluster building.
+And that is why unsupervised learning is quite challenging.
 
 ---
 
@@ -100,13 +110,14 @@ testClusterPred <- predict(modFit,testing)
 table(testClusterPred ,testing$Species)
 ```
 
-
 ---
 
 ## Notes and further reading
 
 * The cl_predict function in the clue package provides similar functionality
+    * But it often makes sense to build your own because you really need to think carefully about how to define the clusters.
 * Beware over-interpretation of clusters!
+    * The clusters may change depending on how you've sampled the data. 
 * This is one basic approach to [recommendation engines](http://en.wikipedia.org/wiki/Recommender_system)
 * [Elements of statistical learning](http://www-stat.stanford.edu/~tibs/ElemStatLearn/)
 * [Introduction to statistical learning](http://www-bcf.usc.edu/~gareth/ISL/)

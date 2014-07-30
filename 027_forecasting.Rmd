@@ -48,18 +48,22 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
   * Seasonal patterns - patterns related to time of week, month, year, etc.
   * Cycles - patterns that rise and fall periodically
 * Subsampling into training/test is more complicated
+    * specific times must be sampled
+    * points are dependent in time.
 * Similar issues arise in spatial data 
   * Dependency between nearby observations
   * Location specific effects
-* Typically goal is to predict one or more observations into the future. 
+* Typically the goal is to predict one or more observations into the future. 
 * All standard predictions can be used (with caution!)
 
 ---
 
 ## Beware spurious correlations!
-
+Time series can often be correlated for reasons that do not make them good for predicting one from the other.
 
 <img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/spurious.jpg height=450>
+
+Here we see that the Google stock price correlates very well with the solitaire network for the given period. Yet they are not related in any way, so there is no reason for them correlate in the future.
 
 [http://www.google.com/trends/correlate](http://www.google.com/trends/correlate)
 
@@ -77,6 +81,9 @@ knit_hooks$set(plot = knitr:::hook_plot_html)
 ---
 
 ## Beware extrapolation!
+Here we see the winning time of many Olympic races exptrapolated into the future. The blue are men and the red are women. But this extrapolation taken to its logical extreme predicts that races will be run in negative times!
+
+The point is that an exptrapolation is only good for limited time into the future.
 
 <img class=center src=https://raw.githubusercontent.com/DataScienceSpecialization/courses/master/assets/img/08_PredictionAndMachineLearning/extrapolation.jpg height=450>
 
@@ -100,12 +107,14 @@ head(GOOG)
 ## Summarize monthly and store as time series
 
 ```{r tseries,dependson="loadGOOG",fig.height=4,fig.width=4}
+# In this case, the 'Volume' data in GOOG has NAs
+GOOG <- subset(GOOG, select = -GOOG.Volume)
+# so eliminating 'Volume' solves that for this example.
 mGoog <- to.monthly(GOOG)
 googOpen <- Op(mGoog)
 ts1 <- ts(googOpen,frequency=12)
 plot(ts1,xlab="Years+1", ylab="GOOG")
 ```
-
 
 ---
 
@@ -122,6 +131,7 @@ plot(ts1,xlab="Years+1", ylab="GOOG")
 
 ## Decompose a time series into parts
 
+The `decompose()` function is from the 'stats' package
 ```{r ,dependson="tseries",fig.height=4.5,fig.width=4.5}
 plot(decompose(ts1),xlab="Years+1")
 ```
@@ -142,7 +152,9 @@ ts1Train
 
 $$ Y_{t}=\frac{1}{2*k+1}\sum_{j=-k}^k {y_{t+j}}$$
 
+Th `ma()` funciton is from the 'forecast` package. 
 ```{r ,dependson="trainingTest",fig.height=4.5,fig.width=4.5}
+library(forecast)
 plot(ts1Train)
 lines(ma(ts1Train,order=3),col="red")
 ```
